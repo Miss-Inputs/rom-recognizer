@@ -202,16 +202,18 @@ public class GUI extends javax.swing.JFrame {
     }//GEN-LAST:event_quitButtonActionPerformed
 
 	private void toggleEnabled() {
-		datField.setEnabled(datField.isEnabled());
-		datButton.setEnabled(datButton.isEnabled());
-		romField.setEnabled(romField.isEnabled());
-		romButton.setEnabled(romButton.isEnabled());
-		resultList.setEnabled(resultList.isEnabled());
+		datField.setEnabled(!datField.isEnabled());
+		datButton.setEnabled(!datButton.isEnabled());
+		romField.setEnabled(!romField.isEnabled());
+		romButton.setEnabled(!romButton.isEnabled());
+		scanButton.setEnabled(!scanButton.isEnabled());
 	}
 
 	private void doScan() {
 		try {
 			toggleEnabled();
+			resultList.setAutoCreateRowSorter(false);
+			resultList.setRowSorter(null);
 
 			//TODO Put a progress bar in there
 			ExecutorService es = Executors.newCachedThreadPool();
@@ -222,6 +224,7 @@ public class GUI extends javax.swing.JFrame {
 			JOptionPane.showMessageDialog(this, ex, "Ah fuck, I can't believe you've done this", JOptionPane.ERROR_MESSAGE);
 		} finally {
 			toggleEnabled();
+			resultList.setAutoCreateRowSorter(true);
 		}
 	}
 

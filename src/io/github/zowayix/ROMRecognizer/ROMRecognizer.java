@@ -5,8 +5,11 @@
  */
 package io.github.zowayix.ROMRecognizer;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.FileVisitResult;
 import java.nio.file.FileVisitor;
 import java.nio.file.Files;
@@ -14,10 +17,14 @@ import java.nio.file.Path;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipFile;
 import javax.swing.JTable;
 import javax.swing.table.DefaultTableModel;
 import org.xml.sax.SAXException;
@@ -102,6 +109,7 @@ public class ROMRecognizer {
 	}
 
 	public static Map<File, Game> identifyAllGames(File datDir, File rootDir) throws IOException {
+		//TODO Should merge this into scanGames (refactoring it to not always use JTable) and deprecate/delet this
 		ArrayList<Game> gameList = getAllDataFiles(datDir);
 		Map<File, Game> games = new HashMap<>();
 		//for (File f : rootDir.listFiles((File dir, String name) -> !(name.endsWith(".zip") || name.endsWith(".7z")))) {
@@ -180,9 +188,39 @@ public class ROMRecognizer {
 			//int rowNum = table.convertRowIndexToModel(model.getRowCount() - 1);
 			int rowNum = model.getRowCount() - 1;
 
-			Thread thready = new Thread(new RowUpdater(f, rowNum, model, gameList));
-			thready.start();
+			(new Thread(new RowUpdater(f, rowNum, model, gameList))).start();
+		}
 
+		private void addZip(File f) throws IOException {
+			try (ZipFile zippy = new ZipFile(f)) {
+				for (ZipEntry ze : Collections.list(zippy.entries())) {
+					InputStream stream = zippy.getInputStream(ze);
+
+					DefaultTableModel model = (DefaultTableModel) table.getModel();
+
+					String zippedName = f.getName() + File.separator + ze.getName();
+					String zippedPath = f.getPath() + File.separator + ze.getName();
+					Object[] row = new Object[]{zippedName, null, "Calculating..", "Calculating..", "Calculating..", zippedPath, null, null, null, 0, null};
+					model.addRow(row);
+					//int rowNum = table.convertRowIndexToModel(model.getRowCount() - 1);
+					int rowNum = model.getRowCount() - 1;
+					
+					//ByteArrayInputStream fuck = new ByteArrayInputStream().
+					
+					(new Thread(new RowUpdater(cloneInputStream(stream), rowNum, model, gameList))).start();
+				}
+			}
+		}
+		
+		private InputStream cloneInputStream(InputStream is) throws IOException{
+			byte[] buf = new byte[1024];
+			ByteArrayOutputStream baos = new ByteArrayOutputStream();
+			int bytesRead;
+			while((bytesRead = is.read(buf)) > -1){
+				baos.write(buf, 0, bytesRead);
+			}
+			baos.flush();
+			return new ByteArrayInputStream(baos.toByteArray());
 		}
 
 		@Override
@@ -194,7 +232,11 @@ public class ROMRecognizer {
 				return FileVisitResult.CONTINUE;
 			}
 
-			addFile(f);
+			if(f.getName().matches("^.+(?i:\\.zip$)")){
+				addZip(f);
+			} else {
+				addFile(f);
+			}
 
 			return FileVisitResult.CONTINUE;
 		}
@@ -212,33 +254,56 @@ public class ROMRecognizer {
 
 		static class RowUpdater implements Runnable {
 
-			private final File f;
+			private final InputStream is;
 			private final int rowNumber;
 			private final DefaultTableModel model;
 			private final Future<Collection<Game>> gameList;
+			private final File f;
 
 			public RowUpdater(File f, int rowNumber, DefaultTableModel model, Future<Collection<Game>> gameList) {
-				this.f = f;
+				this.is = null;
 				this.rowNumber = rowNumber;
 				this.model = model;
 				this.gameList = gameList;
+				this.f = f;
+			}
+
+			public RowUpdater(InputStream is, int rowNumber, DefaultTableModel model, Future<Collection<Game>> gameList) {
+				this.is = is;
+				this.rowNumber = rowNumber;
+				this.model = model;
+				this.gameList = gameList;
+				this.f = null;
 			}
 
 			@Override
 			public void run() {
 				//"Filename", "Name", "CRC32", "MD5", "SHA-1", "Path", "Platform", "ROM Name", "Description", "Size", "Status"
 				try {
-					String crc32 = Hash.crc32(f);
-					String md5 = Hash.md5(f);
-					String sha1 = Hash.sha1(f);
+					String crc32, md5, sha1;
+					if (f == null) {
+						is.reset();
+						crc32 = Hash.crc32(is);
+						is.reset();
+						md5 = Hash.md5(is);
+						is.reset();
+						sha1 = Hash.sha1(is);
+						is.close();
+					} else {
+						crc32 = Hash.crc32(f);
+						md5 = Hash.md5(f);
+						sha1 = Hash.sha1(f);
+					}
 
 					model.setValueAt(crc32, rowNumber, 2);
 					model.setValueAt(md5, rowNumber, 3);
 					model.setValueAt(sha1, rowNumber, 4);
 					model.setValueAt("Waiting...", rowNumber, 1);
+					
+					Collection<Game> theList = gameList.get();
+					model.setValueAt("Identifying...", rowNumber, 1);
 
-					//Game game = identifyBySHA1(gameList, sha1);
-					Game game = identifyBySHA1(gameList.get(), sha1);
+					Game game = identifyBySHA1(theList, sha1);
 					if (game != null) {
 						model.setValueAt(game.getName(), rowNumber, 1);
 						model.setValueAt(game.getDataFile().getName(), rowNumber, 6);
