@@ -18,13 +18,11 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.zip.ZipEntry;
-import java.util.zip.ZipException;
 import java.util.zip.ZipFile;
 import javax.swing.JTable;
 import javax.swing.table.DefaultTableModel;
@@ -113,7 +111,6 @@ public class ROMRecognizer {
 		//TODO Should merge this into scanGames (refactoring it to not always use JTable) and deprecate/delet this
 		ArrayList<Game> gameList = getAllDataFiles(datDir);
 		Map<File, Game> games = new HashMap<>();
-		//for (File f : rootDir.listFiles((File dir, String name) -> !(name.endsWith(".zip") || name.endsWith(".7z")))) {
 		Files.walkFileTree(rootDir.toPath(), new FileVisitor<Path>() {
 			@Override
 			public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
@@ -153,7 +150,6 @@ public class ROMRecognizer {
 	}
 
 	public static void scanGames(Future<Collection<Game>> gameList, File rootDir, JTable table) throws IOException {
-		//for (File f : rootDir.listFiles((File dir, String name) -> !(name.endsWith(".zip") || name.endsWith(".7z")))) {
 		Files.walkFileTree(rootDir.toPath(), new GameScanner(table, gameList)); //}
 	}
 
@@ -186,7 +182,6 @@ public class ROMRecognizer {
 
 			Object[] row = new Object[]{f.getName(), null, "Calculating..", "Calculating..", "Calculating..", f.getPath(), null, null, null, 0, null};
 			model.addRow(row);
-			//int rowNum = table.convertRowIndexToModel(model.getRowCount() - 1);
 			int rowNum = model.getRowCount() - 1;
 
 			(new Thread(new RowUpdater(f, rowNum, model, gameList))).start();
@@ -203,10 +198,8 @@ public class ROMRecognizer {
 					String zippedPath = f.getPath() + File.separator + ze.getName();
 					Object[] row = new Object[]{zippedName, null, "Calculating..", "Calculating..", "Calculating..", zippedPath, null, null, null, 0, null};
 					model.addRow(row);
-					//int rowNum = table.convertRowIndexToModel(model.getRowCount() - 1);
 					int rowNum = model.getRowCount() - 1;
 
-					//ByteArrayInputStream fuck = new ByteArrayInputStream().
 					(new Thread(new RowUpdater(cloneInputStream(stream), rowNum, model, gameList))).start();
 				}
 			}
@@ -226,7 +219,6 @@ public class ROMRecognizer {
 		@Override
 		public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) {
 			try {
-				System.out.println("Visiting file: " + file.toString());
 
 				File f = file.toFile();
 				if (f.isDirectory()) {

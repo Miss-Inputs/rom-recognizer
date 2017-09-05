@@ -1,8 +1,3 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package io.github.zowayix.ROMRecognizer;
 
 import java.io.File;
@@ -72,20 +67,6 @@ public class Hash {
 	}
 
 	public static String crc32(File f) throws IOException {
-		//Fuckin MessageDigest doesn't even fucking have CRC32 what the fuck shit tit balls
-		/*final int BUF_SIZE = 1024 * 1024;
-
-		CRC32 thing = new CRC32();
-
-		byte[] buf = new byte[BUF_SIZE];
-		try (final FileInputStream fis = new FileInputStream(f)) {
-			int bytesRead;
-			while ((bytesRead = fis.read(buf)) >= 0) {
-				thing.update(buf, 0, bytesRead);
-			}
-		}
-		//return DatatypeConverter.printHexBinary(md.digest());
-		return String.format("%08x", thing.getValue());*/
 		try (final FileInputStream fis = new FileInputStream(f)) {
 			return crc32(fis);
 		}
@@ -104,16 +85,6 @@ public class Hash {
 	}
 
 	public static String hashFile(File f, String algorithm) throws FileNotFoundException, IOException, NoSuchAlgorithmException {
-		/*final int BUF_SIZE = 1024 * 1024;
-		MessageDigest md = MessageDigest.getInstance(algorithm);
-		byte[] buf = new byte[BUF_SIZE];
-		try (final FileInputStream fis = new FileInputStream(f)) {
-			int bytesRead;
-			while ((bytesRead = fis.read(buf)) >= 0) {
-				md.update(buf, 0, bytesRead);
-			}
-		}
-		return DatatypeConverter.printHexBinary(md.digest());*/
 		try (final FileInputStream fis = new FileInputStream(f)) {
 			return hashInputStream(fis, algorithm);
 		}
