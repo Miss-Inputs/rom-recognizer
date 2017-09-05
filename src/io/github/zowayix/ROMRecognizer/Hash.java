@@ -1,5 +1,6 @@
 package io.github.zowayix.ROMRecognizer;
 
+import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -56,7 +57,7 @@ public class Hash {
 		//Fuckin MessageDigest doesn't even fucking have CRC32 what the fuck shit tit balls
 		final int BUF_SIZE = 1024 * 1024;
 
-		CRC32 thing = new CRC32();
+		final CRC32 thing = new CRC32();
 
 		byte[] buf = new byte[BUF_SIZE];
 		int bytesRead;
@@ -68,7 +69,7 @@ public class Hash {
 
 	public static String crc32(File f) throws IOException {
 		try (final FileInputStream fis = new FileInputStream(f)) {
-			return crc32(fis);
+			return crc32(new BufferedInputStream(fis));
 		}
 	}
 

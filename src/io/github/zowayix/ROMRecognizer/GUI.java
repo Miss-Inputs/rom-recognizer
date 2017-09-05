@@ -11,6 +11,7 @@ import java.util.Collection;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.ThreadFactory;
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 import javax.swing.SwingWorker;
@@ -48,6 +49,7 @@ public class GUI extends javax.swing.JFrame {
         quitButton = new javax.swing.JButton();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
+        setTitle("The ROM Recognizer");
 
         datLabel.setLabelFor(datField);
         datLabel.setText("DAT directory:");
@@ -212,8 +214,12 @@ public class GUI extends javax.swing.JFrame {
 			resultList.setRowSorter(null);
 
 			//TODO Put a progress bar in there
-			ExecutorService es = Executors.newCachedThreadPool();
-			Future<Collection<Game>> gameList = es.submit(() -> ROMRecognizer.getAllDataFiles(new File(datField.getText())));
+			ExecutorService exeggutor = Executors.newSingleThreadExecutor((Runnable r) -> {
+				Thread t = new Thread(r);
+				t.setPriority(Thread.NORM_PRIORITY + 1);
+				return t;
+			});
+			Future<Collection<Game>> gameList = exeggutor.submit(() -> ROMRecognizer.getAllDataFiles(new File(datField.getText())));
 
 			ROMRecognizer.scanGames(gameList, new File(romField.getText()), resultList);
 		} catch (Exception ex) {

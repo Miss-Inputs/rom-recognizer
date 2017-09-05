@@ -21,6 +21,8 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
@@ -150,7 +152,8 @@ public class ROMRecognizer {
 	}
 
 	public static void scanGames(Future<Collection<Game>> gameList, File rootDir, JTable table) throws IOException {
-		Files.walkFileTree(rootDir.toPath(), new GameScanner(table, gameList)); //}
+		ExecutorService pool = Executors.newFixedThreadPool(256);
+		Files.walkFileTree(rootDir.toPath(), new GameScanner(table, gameList, pool));
 	}
 
 	public static void main(String[] args) throws Exception {
@@ -165,10 +168,12 @@ public class ROMRecognizer {
 
 		private final JTable table;
 		private final Future<Collection<Game>> gameList;
+		private final ExecutorService pool;
 
-		public GameScanner(JTable table, Future<Collection<Game>> gameList) {
+		public GameScanner(JTable table, Future<Collection<Game>> gameList, ExecutorService pool) {
 			this.table = table;
 			this.gameList = gameList;
+			this.pool = pool;
 		}
 
 		@Override
@@ -184,7 +189,9 @@ public class ROMRecognizer {
 			model.addRow(row);
 			int rowNum = model.getRowCount() - 1;
 
-			(new Thread(new RowUpdater(f, rowNum, model, gameList))).start();
+			//(new Thread(new RowUpdater(f, rowNum, model, gameList))).start();
+			Runnable updater = new RowUpdater(f, rowNum, model, gameList);
+			pool.execute(updater);
 		}
 
 		private void addZip(File f) throws IOException {
@@ -200,7 +207,8 @@ public class ROMRecognizer {
 					model.addRow(row);
 					int rowNum = model.getRowCount() - 1;
 
-					(new Thread(new RowUpdater(cloneInputStream(stream), rowNum, model, gameList))).start();
+					Runnable updater = new RowUpdater(cloneInputStream(stream), rowNum, model, gameList);
+					pool.execute(updater);
 				}
 			}
 		}
