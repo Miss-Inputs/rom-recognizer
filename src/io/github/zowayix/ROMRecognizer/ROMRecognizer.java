@@ -159,14 +159,11 @@ public class ROMRecognizer {
 
 		@Override
 		public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
-			//"Filename", "Name", "CRC32", "MD5", "SHA-1", "Path", "Platform", "ROM Name", "Description", "Size", "Status"
 			System.out.println("Visiting file: " + file.toString());
 			DefaultTableModel model = (DefaultTableModel) table.getModel();
 
 			File f = file.toFile();
 			if (f.isDirectory()) {
-				model.addRow(new Object[]{f.getName(), "Directory!"});
-				model.fireTableDataChanged();
 				return FileVisitResult.CONTINUE;
 			}
 
@@ -181,27 +178,10 @@ public class ROMRecognizer {
 				row = new Object[]{f.getName(), game.getName(), crc32, md5, sha1,
 					f.getPath(), game.getDataFile().getName(), game.getRomName(), game.getDescription(), game.getSize(), game.getStatus()};
 			} else {
-				row = new Object[]{f.getName(), "Unrecongized!", crc32, md5, sha1, f.getPath(), "???", "???", "???", 0, "???"};
+				row = new Object[]{f.getName(), "Unrecognized!", crc32, md5, sha1, f.getPath(), "???", "???", "???", 0, "???"};
 			}
 			model.addRow(row);
-			model.fireTableDataChanged();
-			table.repaint();
-			table.invalidate(); //FUCKING REPAINT YOU HECKLORD
 
-			/*File f = file.toFile();
-			//TODO support compressed files
-			if (f.isDirectory()) {
-			return FileVisitResult.CONTINUE;
-			}
-			
-			Game game = identify(datDir, f);
-			if (game != null) {
-			//System.out.println("Identified " + f.getAbsolutePath() + " as:\n" + game + "\n---------\n");
-			//games.put(f, game);
-			
-			} else {
-			//games.put(f, null);
-			}*/
 			return FileVisitResult.CONTINUE;
 		}
 

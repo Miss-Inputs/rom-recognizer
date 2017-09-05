@@ -12,6 +12,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
+import javax.swing.SwingWorker;
 
 /**
  *
@@ -178,7 +179,18 @@ public class GUI extends javax.swing.JFrame {
         if(datField.getText().length() == 0){
 			JOptionPane.showMessageDialog(this, "You need to specify a DAT file directory!", "borf", JOptionPane.WARNING_MESSAGE);
 		}
-		doScan();
+		
+		SwingWorker<Void, Void> woiker = new SwingWorker<Void, Void>() {
+			@Override
+			protected Void doInBackground() throws Exception {
+				doScan();
+				return null;
+			}
+		};
+		
+		woiker.execute();
+		
+//		doScan();
     }//GEN-LAST:event_scanButtonActionPerformed
 
     private void quitButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_quitButtonActionPerformed
