@@ -16,10 +16,9 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 import javax.swing.JTable;
-import javax.swing.SwingUtilities;
 import javax.swing.table.DefaultTableModel;
 import org.xml.sax.SAXException;
 
@@ -144,7 +143,7 @@ public class ROMRecognizer {
 		return games;
 	}
 
-	public static void scanGames(Collection<Game> gameList, File rootDir, JTable table) throws IOException {
+	public static void scanGames(Future<Collection<Game>> gameList, File rootDir, JTable table) throws IOException {
 		//for (File f : rootDir.listFiles((File dir, String name) -> !(name.endsWith(".zip") || name.endsWith(".7z")))) {
 		Files.walkFileTree(rootDir.toPath(), new GameScanner(table, gameList)); //}
 	}
@@ -160,9 +159,9 @@ public class ROMRecognizer {
 	private static class GameScanner implements FileVisitor<Path> {
 
 		private final JTable table;
-		private final Collection<Game> gameList;
+		private final Future<Collection<Game>> gameList;
 
-		public GameScanner(JTable table, Collection<Game> gameList) {
+		public GameScanner(JTable table, Future<Collection<Game>> gameList) {
 			this.table = table;
 			this.gameList = gameList;
 		}
@@ -180,29 +179,9 @@ public class ROMRecognizer {
 			model.addRow(row);
 			//int rowNum = table.convertRowIndexToModel(model.getRowCount() - 1);
 			int rowNum = model.getRowCount() - 1;
-			
+
 			Thread thready = new Thread(new RowUpdater(f, rowNum, model, gameList));
 			thready.start();
-
-		}
-
-		private void addFile_old(File f) throws IOException {
-			DefaultTableModel model = (DefaultTableModel) table.getModel();
-
-			String crc32 = Hash.crc32(f);
-			String md5 = Hash.md5(f);
-			String sha1 = Hash.sha1(f);
-
-			Game game = identifyBySHA1(gameList, sha1);
-
-			Object[] row;
-			if (game != null) {
-				row = new Object[]{f.getName(), game.getName(), crc32, md5, sha1,
-					f.getPath(), game.getDataFile().getName(), game.getRomName(), game.getDescription(), game.getSize(), game.getStatus()};
-			} else {
-				row = new Object[]{f.getName(), "Unrecognized!", crc32, md5, sha1, f.getPath(), "???", "???", "???", 0, "???"};
-			}
-			model.addRow(row);
 
 		}
 
@@ -236,9 +215,9 @@ public class ROMRecognizer {
 			private final File f;
 			private final int rowNumber;
 			private final DefaultTableModel model;
-			private final Collection<Game> gameList;
+			private final Future<Collection<Game>> gameList;
 
-			public RowUpdater(File f, int rowNumber, DefaultTableModel model, Collection<Game> gameList) {
+			public RowUpdater(File f, int rowNumber, DefaultTableModel model, Future<Collection<Game>> gameList) {
 				this.f = f;
 				this.rowNumber = rowNumber;
 				this.model = model;
@@ -256,8 +235,10 @@ public class ROMRecognizer {
 					model.setValueAt(crc32, rowNumber, 2);
 					model.setValueAt(md5, rowNumber, 3);
 					model.setValueAt(sha1, rowNumber, 4);
+					model.setValueAt("Waiting...", rowNumber, 1);
 
-					Game game = identifyBySHA1(gameList, sha1);
+					//Game game = identifyBySHA1(gameList, sha1);
+					Game game = identifyBySHA1(gameList.get(), sha1);
 					if (game != null) {
 						model.setValueAt(game.getName(), rowNumber, 1);
 						model.setValueAt(game.getDataFile().getName(), rowNumber, 6);
@@ -274,7 +255,7 @@ public class ROMRecognizer {
 						model.setValueAt(null, rowNumber, 10);
 					}
 
-				} catch (IOException ex) {
+				} catch (IOException | InterruptedException | ExecutionException ex) {
 					//Fuck off
 					throw new RuntimeException(ex);
 				}

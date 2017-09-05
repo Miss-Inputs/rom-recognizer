@@ -9,6 +9,10 @@ import java.awt.event.WindowEvent;
 import java.io.File;
 import java.io.IOException;
 import java.util.Collection;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.JFileChooser;
@@ -158,29 +162,29 @@ public class GUI extends javax.swing.JFrame {
     }// </editor-fold>//GEN-END:initComponents
 
     private void datButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_datButtonActionPerformed
-        JFileChooser chooser = new JFileChooser(datField.getText());
+		JFileChooser chooser = new JFileChooser(datField.getText());
 		chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
 		int result = chooser.showOpenDialog(this);
-		if(result == JFileChooser.APPROVE_OPTION){
+		if (result == JFileChooser.APPROVE_OPTION) {
 			datField.setText(chooser.getSelectedFile().getPath());
 		}
     }//GEN-LAST:event_datButtonActionPerformed
 
     private void romButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_romButtonActionPerformed
-        JFileChooser chooser = new JFileChooser(romField.getText());
+		JFileChooser chooser = new JFileChooser(romField.getText());
 		chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
 		int result = chooser.showOpenDialog(this);
-		if(result == JFileChooser.APPROVE_OPTION){
+		if (result == JFileChooser.APPROVE_OPTION) {
 			romField.setText(chooser.getSelectedFile().getPath());
 		}
 
     }//GEN-LAST:event_romButtonActionPerformed
 
     private void scanButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_scanButtonActionPerformed
-        if(datField.getText().length() == 0){
+		if (datField.getText().length() == 0) {
 			JOptionPane.showMessageDialog(this, "You need to specify a DAT file directory!", "borf", JOptionPane.WARNING_MESSAGE);
 		}
-		
+
 		SwingWorker<Void, Void> woiker = new SwingWorker<Void, Void>() {
 			@Override
 			protected Void doInBackground() throws Exception {
@@ -188,27 +192,39 @@ public class GUI extends javax.swing.JFrame {
 				return null;
 			}
 		};
-		
+
 		woiker.execute();
-		
+
     }//GEN-LAST:event_scanButtonActionPerformed
 
     private void quitButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_quitButtonActionPerformed
-        dispatchEvent(new WindowEvent(this, WindowEvent.WINDOW_CLOSING));
+		dispatchEvent(new WindowEvent(this, WindowEvent.WINDOW_CLOSING));
     }//GEN-LAST:event_quitButtonActionPerformed
 
-	private void doScan(){
+	private void toggleEnabled() {
+		datField.setEnabled(datField.isEnabled());
+		datButton.setEnabled(datButton.isEnabled());
+		romField.setEnabled(romField.isEnabled());
+		romButton.setEnabled(romButton.isEnabled());
+		resultList.setEnabled(resultList.isEnabled());
+	}
+
+	private void doScan() {
 		try {
+			toggleEnabled();
+
 			//TODO Put a progress bar in there
-			System.out.println("Initializing...");
-			Collection<Game> gameList = ROMRecognizer.getAllDataFiles(new File(datField.getText()));
-			System.out.println("Go!");
+			ExecutorService es = Executors.newCachedThreadPool();
+			Future<Collection<Game>> gameList = es.submit(() -> ROMRecognizer.getAllDataFiles(new File(datField.getText())));
+
 			ROMRecognizer.scanGames(gameList, new File(romField.getText()), resultList);
-		} catch (IOException ex) {
+		} catch (Exception ex) {
 			JOptionPane.showMessageDialog(this, ex, "Ah fuck, I can't believe you've done this", JOptionPane.ERROR_MESSAGE);
+		} finally {
+			toggleEnabled();
 		}
 	}
-	
+
 	/**
 	 * @param args the command line arguments
 	 */
