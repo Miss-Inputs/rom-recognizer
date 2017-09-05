@@ -8,6 +8,7 @@ package io.github.zowayix.ROMRecognizer;
 import java.awt.event.WindowEvent;
 import java.io.File;
 import java.io.IOException;
+import java.util.Collection;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.JFileChooser;
@@ -190,7 +191,6 @@ public class GUI extends javax.swing.JFrame {
 		
 		woiker.execute();
 		
-//		doScan();
     }//GEN-LAST:event_scanButtonActionPerformed
 
     private void quitButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_quitButtonActionPerformed
@@ -199,7 +199,11 @@ public class GUI extends javax.swing.JFrame {
 
 	private void doScan(){
 		try {
-			ROMRecognizer.scanGames(new File(datField.getText()), new File(romField.getText()), resultList);
+			//TODO Put a progress bar in there
+			System.out.println("Initializing...");
+			Collection<Game> gameList = ROMRecognizer.getAllDataFiles(new File(datField.getText()));
+			System.out.println("Go!");
+			ROMRecognizer.scanGames(gameList, new File(romField.getText()), resultList);
 		} catch (IOException ex) {
 			JOptionPane.showMessageDialog(this, ex, "Ah fuck, I can't believe you've done this", JOptionPane.ERROR_MESSAGE);
 		}

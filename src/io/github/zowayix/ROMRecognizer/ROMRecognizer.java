@@ -13,9 +13,13 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import javax.swing.JTable;
+import javax.swing.SwingUtilities;
 import javax.swing.table.DefaultTableModel;
 import org.xml.sax.SAXException;
 
@@ -25,12 +29,7 @@ import org.xml.sax.SAXException;
  */
 public class ROMRecognizer {
 
-	private static ArrayList<Game> allDats;
-
-	public synchronized static ArrayList<Game> getAllDataFiles(File rootDir) throws IOException {
-		if (allDats != null) {
-			return allDats;
-		}
+	public static ArrayList<Game> getAllDataFiles(File rootDir) throws IOException {
 		ArrayList<Game> games = new ArrayList<>();
 
 		for (File f : rootDir.listFiles((File dir, String name) -> name.endsWith(".dat"))) {
@@ -44,7 +43,6 @@ public class ROMRecognizer {
 			}
 		}
 
-		allDats = games;
 		return games;
 	}
 
@@ -52,8 +50,16 @@ public class ROMRecognizer {
 		return identifyBySHA1(datDir, Hash.sha1(path));
 	}
 
+	public static Game identify(Collection<Game> gameList, File path) throws IOException {
+		return identifyBySHA1(gameList, Hash.sha1(path));
+	}
+
 	public static Game identifyByCRC32(File datDir, String crc32) throws IOException {
-		for (Game g : getAllDataFiles(datDir)) {
+		return identifyByCRC32(getAllDataFiles(datDir), crc32);
+	}
+
+	public static Game identifyByCRC32(Collection<Game> gameList, String crc32) throws IOException {
+		for (Game g : gameList) {
 			if (g.getCrc32() == null) {
 				continue;
 			}
@@ -65,7 +71,11 @@ public class ROMRecognizer {
 	}
 
 	public static Game identifyBySHA1(File datDir, String sha1) throws IOException {
-		for (Game g : getAllDataFiles(datDir)) {
+		return identifyBySHA1(getAllDataFiles(datDir), sha1);
+	}
+
+	public static Game identifyBySHA1(Collection<Game> gameList, String sha1) throws IOException {
+		for (Game g : gameList) {
 			if (g.getSha1() == null) {
 				continue;
 			}
@@ -77,7 +87,11 @@ public class ROMRecognizer {
 	}
 
 	public static Game identifyByMD5(File datDir, String md5) throws IOException {
-		for (Game g : getAllDataFiles(datDir)) {
+		return identifyByMD5(getAllDataFiles(datDir), md5);
+	}
+
+	public static Game identifyByMD5(Collection<Game> gameList, String md5) throws IOException {
+		for (Game g : gameList) {
 			if (g.getMd5() == null) {
 				continue;
 			}
@@ -89,6 +103,7 @@ public class ROMRecognizer {
 	}
 
 	public static Map<File, Game> identifyAllGames(File datDir, File rootDir) throws IOException {
+		ArrayList<Game> gameList = getAllDataFiles(datDir);
 		Map<File, Game> games = new HashMap<>();
 		//for (File f : rootDir.listFiles((File dir, String name) -> !(name.endsWith(".zip") || name.endsWith(".7z")))) {
 		Files.walkFileTree(rootDir.toPath(), new FileVisitor<Path>() {
@@ -105,7 +120,7 @@ public class ROMRecognizer {
 					return FileVisitResult.CONTINUE;
 				}
 
-				Game game = identify(datDir, f);
+				Game game = identify(gameList, f);
 				if (game != null) {
 					System.out.println("Identified " + f.getAbsolutePath() + " as:\n" + game + "\n---------\n");
 					games.put(f, game);
@@ -129,13 +144,13 @@ public class ROMRecognizer {
 		return games;
 	}
 
-	public static void scanGames(File datDir, File rootDir, JTable table) throws IOException {
+	public static void scanGames(Collection<Game> gameList, File rootDir, JTable table) throws IOException {
 		//for (File f : rootDir.listFiles((File dir, String name) -> !(name.endsWith(".zip") || name.endsWith(".7z")))) {
-		Files.walkFileTree(rootDir.toPath(), new GameScanner(table, datDir)); //}
+		Files.walkFileTree(rootDir.toPath(), new GameScanner(table, gameList)); //}
 	}
 
 	public static void main(String[] args) throws Exception {
-		//System.out.println(identify(new File("/media/Stuff/Roms/DATs"), new File("/media/Stuff/Roms/DS/CNVPv01.nds")));
+		//TODO Make this a nicer CLI maybe
 		String datDir = args.length == 0 ? "./DATs" : args[0];
 		String romDir = args.length <= 1 ? "." : args[1];
 
@@ -145,11 +160,11 @@ public class ROMRecognizer {
 	private static class GameScanner implements FileVisitor<Path> {
 
 		private final JTable table;
-		private final File datDir;
+		private final Collection<Game> gameList;
 
-		public GameScanner(JTable table, File datDir) {
+		public GameScanner(JTable table, Collection<Game> gameList) {
 			this.table = table;
-			this.datDir = datDir;
+			this.gameList = gameList;
 		}
 
 		@Override
@@ -157,21 +172,28 @@ public class ROMRecognizer {
 			return FileVisitResult.CONTINUE;
 		}
 
-		@Override
-		public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
-			System.out.println("Visiting file: " + file.toString());
+		private void addFile(File f) throws IOException {
+			//"Filename", "Name", "CRC32", "MD5", "SHA-1", "Path", "Platform", "ROM Name", "Description", "Size", "Status"
 			DefaultTableModel model = (DefaultTableModel) table.getModel();
 
-			File f = file.toFile();
-			if (f.isDirectory()) {
-				return FileVisitResult.CONTINUE;
-			}
+			Object[] row = new Object[]{f.getName(), null, "Calculating..", "Calculating..", "Calculating..", f.getPath(), null, null, null, 0, null};
+			model.addRow(row);
+			//int rowNum = table.convertRowIndexToModel(model.getRowCount() - 1);
+			int rowNum = model.getRowCount() - 1;
+			
+			Thread thready = new Thread(new RowUpdater(f, rowNum, model, gameList));
+			thready.start();
+
+		}
+
+		private void addFile_old(File f) throws IOException {
+			DefaultTableModel model = (DefaultTableModel) table.getModel();
 
 			String crc32 = Hash.crc32(f);
 			String md5 = Hash.md5(f);
 			String sha1 = Hash.sha1(f);
 
-			Game game = identifyBySHA1(datDir, sha1);
+			Game game = identifyBySHA1(gameList, sha1);
 
 			Object[] row;
 			if (game != null) {
@@ -181,6 +203,19 @@ public class ROMRecognizer {
 				row = new Object[]{f.getName(), "Unrecognized!", crc32, md5, sha1, f.getPath(), "???", "???", "???", 0, "???"};
 			}
 			model.addRow(row);
+
+		}
+
+		@Override
+		public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+			System.out.println("Visiting file: " + file.toString());
+
+			File f = file.toFile();
+			if (f.isDirectory()) {
+				return FileVisitResult.CONTINUE;
+			}
+
+			addFile(f);
 
 			return FileVisitResult.CONTINUE;
 		}
@@ -194,6 +229,57 @@ public class ROMRecognizer {
 		@Override
 		public FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
 			return FileVisitResult.CONTINUE;
+		}
+
+		static class RowUpdater implements Runnable {
+
+			private final File f;
+			private final int rowNumber;
+			private final DefaultTableModel model;
+			private final Collection<Game> gameList;
+
+			public RowUpdater(File f, int rowNumber, DefaultTableModel model, Collection<Game> gameList) {
+				this.f = f;
+				this.rowNumber = rowNumber;
+				this.model = model;
+				this.gameList = gameList;
+			}
+
+			@Override
+			public void run() {
+				//"Filename", "Name", "CRC32", "MD5", "SHA-1", "Path", "Platform", "ROM Name", "Description", "Size", "Status"
+				try {
+					String crc32 = Hash.crc32(f);
+					String md5 = Hash.md5(f);
+					String sha1 = Hash.sha1(f);
+
+					model.setValueAt(crc32, rowNumber, 2);
+					model.setValueAt(md5, rowNumber, 3);
+					model.setValueAt(sha1, rowNumber, 4);
+
+					Game game = identifyBySHA1(gameList, sha1);
+					if (game != null) {
+						model.setValueAt(game.getName(), rowNumber, 1);
+						model.setValueAt(game.getDataFile().getName(), rowNumber, 6);
+						model.setValueAt(game.getRomName(), rowNumber, 7);
+						model.setValueAt(game.getDescription(), rowNumber, 8);
+						model.setValueAt(game.getSize(), rowNumber, 9);
+						model.setValueAt(game.getStatus(), rowNumber, 10);
+					} else {
+						model.setValueAt("Unrecognized!", rowNumber, 1);
+						model.setValueAt(null, rowNumber, 6);
+						model.setValueAt(null, rowNumber, 7);
+						model.setValueAt(null, rowNumber, 8);
+						model.setValueAt(null, rowNumber, 9);
+						model.setValueAt(null, rowNumber, 10);
+					}
+
+				} catch (IOException ex) {
+					//Fuck off
+					throw new RuntimeException(ex);
+				}
+
+			}
 		}
 	}
 
