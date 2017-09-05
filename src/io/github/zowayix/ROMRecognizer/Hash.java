@@ -11,6 +11,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.zip.CRC32;
 import javax.xml.bind.DatatypeConverter;
 
 /**
@@ -18,7 +19,7 @@ import javax.xml.bind.DatatypeConverter;
  * @author megan
  */
 public class Hash {
-	
+
 	public static String md5(File f) throws IOException {
 		try {
 			return hashFile(f, "md5");
@@ -35,6 +36,23 @@ public class Hash {
 			//Shouldn't happen, Java implementations are required to support SHA-1
 			throw new RuntimeException(ex);
 		}
+	}
+
+	public static String crc32(File f) throws IOException {
+		//Fuckin MessageDigest doesn't even fucking have CRC32 what the fuck shit tit balls
+		final int BUF_SIZE = 1024 * 1024;
+
+		CRC32 thing = new CRC32();
+
+		byte[] buf = new byte[BUF_SIZE];
+		try (final FileInputStream fis = new FileInputStream(f)) {
+			int bytesRead;
+			while ((bytesRead = fis.read(buf)) >= 0) {
+				thing.update(buf, 0, bytesRead);
+			}
+		}
+		//return DatatypeConverter.printHexBinary(md.digest());
+		return String.format("%08x", thing.getValue());
 	}
 
 	public static String hashFile(File f, String algorithm) throws FileNotFoundException, IOException, NoSuchAlgorithmException {

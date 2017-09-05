@@ -6,7 +6,6 @@
 package io.github.zowayix.ROMRecognizer;
 
 import java.io.File;
-import java.io.FilenameFilter;
 import java.io.IOException;
 import java.nio.file.FileVisitResult;
 import java.nio.file.FileVisitor;
@@ -16,6 +15,8 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
+import javax.swing.JTable;
+import javax.swing.table.DefaultTableModel;
 import org.xml.sax.SAXException;
 
 /**
@@ -26,7 +27,7 @@ public class ROMRecognizer {
 
 	private static ArrayList<Game> allDats;
 
-	public static ArrayList<Game> getAllDataFiles(File rootDir) throws IOException {
+	public synchronized static ArrayList<Game> getAllDataFiles(File rootDir) throws IOException {
 		if (allDats != null) {
 			return allDats;
 		}
@@ -103,7 +104,7 @@ public class ROMRecognizer {
 				if (f.isDirectory()) {
 					return FileVisitResult.CONTINUE;
 				}
-				
+
 				Game game = identify(datDir, f);
 				if (game != null) {
 					System.out.println("Identified " + f.getAbsolutePath() + " as:\n" + game + "\n---------\n");
@@ -128,9 +129,92 @@ public class ROMRecognizer {
 		return games;
 	}
 
+	public static void scanGames(File datDir, File rootDir, JTable table) throws IOException {
+		//for (File f : rootDir.listFiles((File dir, String name) -> !(name.endsWith(".zip") || name.endsWith(".7z")))) {
+		Files.walkFileTree(rootDir.toPath(), new GameScanner(table, datDir)); //}
+	}
+
 	public static void main(String[] args) throws Exception {
 		//System.out.println(identify(new File("/media/Stuff/Roms/DATs"), new File("/media/Stuff/Roms/DS/CNVPv01.nds")));
-		System.out.println(identifyAllGames(new File("/media/Stuff/Roms/DATs"), new File("/media/Stuff/Roms/")));
+		String datDir = args.length == 0 ? "./DATs" : args[0];
+		String romDir = args.length <= 1 ? "." : args[1];
+
+		System.out.println(identifyAllGames(new File(datDir), new File(romDir)));
+	}
+
+	private static class GameScanner implements FileVisitor<Path> {
+
+		private final JTable table;
+		private final File datDir;
+
+		public GameScanner(JTable table, File datDir) {
+			this.table = table;
+			this.datDir = datDir;
+		}
+
+		@Override
+		public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
+			return FileVisitResult.CONTINUE;
+		}
+
+		@Override
+		public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+			//"Filename", "Name", "CRC32", "MD5", "SHA-1", "Path", "Platform", "ROM Name", "Description", "Size", "Status"
+			System.out.println("Visiting file: " + file.toString());
+			DefaultTableModel model = (DefaultTableModel) table.getModel();
+
+			File f = file.toFile();
+			if (f.isDirectory()) {
+				model.addRow(new Object[]{f.getName(), "Directory!"});
+				model.fireTableDataChanged();
+				return FileVisitResult.CONTINUE;
+			}
+
+			String crc32 = Hash.crc32(f);
+			String md5 = Hash.md5(f);
+			String sha1 = Hash.sha1(f);
+
+			Game game = identifyBySHA1(datDir, sha1);
+
+			Object[] row;
+			if (game != null) {
+				row = new Object[]{f.getName(), game.getName(), crc32, md5, sha1,
+					f.getPath(), game.getDataFile().getName(), game.getRomName(), game.getDescription(), game.getSize(), game.getStatus()};
+			} else {
+				row = new Object[]{f.getName(), "Unrecongized!", crc32, md5, sha1, f.getPath(), "???", "???", "???", 0, "???"};
+			}
+			model.addRow(row);
+			model.fireTableDataChanged();
+			table.repaint();
+			table.invalidate(); //FUCKING REPAINT YOU HECKLORD
+
+			/*File f = file.toFile();
+			//TODO support compressed files
+			if (f.isDirectory()) {
+			return FileVisitResult.CONTINUE;
+			}
+			
+			Game game = identify(datDir, f);
+			if (game != null) {
+			//System.out.println("Identified " + f.getAbsolutePath() + " as:\n" + game + "\n---------\n");
+			//games.put(f, game);
+			
+			} else {
+			//games.put(f, null);
+			}*/
+			return FileVisitResult.CONTINUE;
+		}
+
+		@Override
+		public FileVisitResult visitFileFailed(Path file, IOException exc) throws IOException {
+			//Whomstd've give a shit
+			return FileVisitResult.CONTINUE;
+		}
+
+		@Override
+		public FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
+			return FileVisitResult.CONTINUE;
+		}
 	}
 
 }
