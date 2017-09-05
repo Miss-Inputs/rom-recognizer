@@ -24,6 +24,7 @@ import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.zip.ZipEntry;
+import java.util.zip.ZipException;
 import java.util.zip.ZipFile;
 import javax.swing.JTable;
 import javax.swing.table.DefaultTableModel;
@@ -204,19 +205,18 @@ public class ROMRecognizer {
 					model.addRow(row);
 					//int rowNum = table.convertRowIndexToModel(model.getRowCount() - 1);
 					int rowNum = model.getRowCount() - 1;
-					
+
 					//ByteArrayInputStream fuck = new ByteArrayInputStream().
-					
 					(new Thread(new RowUpdater(cloneInputStream(stream), rowNum, model, gameList))).start();
 				}
 			}
 		}
-		
-		private InputStream cloneInputStream(InputStream is) throws IOException{
+
+		private InputStream cloneInputStream(InputStream is) throws IOException {
 			byte[] buf = new byte[1024];
 			ByteArrayOutputStream baos = new ByteArrayOutputStream();
 			int bytesRead;
-			while((bytesRead = is.read(buf)) > -1){
+			while ((bytesRead = is.read(buf)) > -1) {
 				baos.write(buf, 0, bytesRead);
 			}
 			baos.flush();
@@ -224,21 +224,29 @@ public class ROMRecognizer {
 		}
 
 		@Override
-		public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
-			System.out.println("Visiting file: " + file.toString());
+		public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) {
+			try {
+				System.out.println("Visiting file: " + file.toString());
 
-			File f = file.toFile();
-			if (f.isDirectory()) {
+				File f = file.toFile();
+				if (f.isDirectory()) {
+					return FileVisitResult.CONTINUE;
+				}
+
+				if (f.getName().matches("^.+(?i:\\.zip$)")) {
+					addZip(f);
+				} else {
+					addFile(f);
+				}
+
+				return FileVisitResult.CONTINUE;
+			} catch (Exception ex) {
+				//Don't add this file obviously, but move along
+				System.err.println("Oh no! " + file + " got an error: " + ex.toString());
+				//TODO Should report this to the user graphically, but non-intrusively
+
 				return FileVisitResult.CONTINUE;
 			}
-
-			if(f.getName().matches("^.+(?i:\\.zip$)")){
-				addZip(f);
-			} else {
-				addFile(f);
-			}
-
-			return FileVisitResult.CONTINUE;
 		}
 
 		@Override
@@ -299,7 +307,7 @@ public class ROMRecognizer {
 					model.setValueAt(md5, rowNumber, 3);
 					model.setValueAt(sha1, rowNumber, 4);
 					model.setValueAt("Waiting...", rowNumber, 1);
-					
+
 					Collection<Game> theList = gameList.get();
 					model.setValueAt("Identifying...", rowNumber, 1);
 
