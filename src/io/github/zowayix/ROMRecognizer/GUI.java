@@ -5,32 +5,22 @@
  */
 package io.github.zowayix.ROMRecognizer;
 
-import java.awt.HeadlessException;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
 import java.awt.event.WindowEvent;
 import java.io.File;
 import java.io.IOException;
 import java.text.ParseException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.prefs.Preferences;
 import javax.swing.JFileChooser;
-import javax.swing.JMenu;
-import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
-import javax.swing.JPopupMenu;
-import javax.swing.JTable;
 import javax.swing.SwingWorker;
 import javax.swing.table.DefaultTableModel;
-import javax.swing.table.TableColumn;
-import javax.swing.table.TableColumnModel;
 
 /**
  *
@@ -39,6 +29,7 @@ import javax.swing.table.TableColumnModel;
 public class GUI extends javax.swing.JFrame {
 
 	private static final long serialVersionUID = -7190543310189730445L;
+	private final Preferences prefs = Preferences.userNodeForPackage(getClass());
 
 	private List<String> filters = null;
 
@@ -49,8 +40,35 @@ public class GUI extends javax.swing.JFrame {
 		initComponents();
 		filters = new ArrayList<>(ROMRecognizer.getKnownExtensions().keySet());
 		TableContextMenuListener.addTableHeaderEventHandlers(resultList);
+		loadPreferences();
 	}
 
+	private void loadPreferences() {
+
+		datField.setText(prefs.get("datDir", null));
+		romField.setText(prefs.get("romDir", null));
+		workerSpinner.setValue(prefs.getInt("workers", (int) workerSpinner.getValue()));
+		filterCheck.setSelected(prefs.getBoolean("useFilters", false));
+		String filterPref = prefs.get("filters", null);
+		if (filterPref != null) {
+			filters = new ArrayList<>(Arrays.asList(filterPref.split(",")));
+		}
+
+		setBounds(prefs.getInt("windowX", getX()), prefs.getInt("windowY", getY()), prefs.getInt("windowW", getWidth()), prefs.getInt("windowH", getHeight()));
+	}
+
+	private void savePreferences() {
+		prefs.put("datDir", datField.getText());
+		prefs.put("romDir", romField.getText());
+		prefs.putInt("workers", (int) workerSpinner.getModel().getValue());
+		prefs.putBoolean("useFilters", filterCheck.isSelected());
+		prefs.put("filters", String.join(",", filters));
+
+		prefs.putInt("windowX", getX());
+		prefs.putInt("windowY", getY());
+		prefs.putInt("windowH", getHeight());
+		prefs.putInt("windowW", getWidth());
+	}
 
 	/**
 	 * This method is called from within the constructor to initialize the form. WARNING: Do NOT
@@ -77,6 +95,11 @@ public class GUI extends javax.swing.JFrame {
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         setTitle("The ROM Recognizer");
+        addWindowListener(new java.awt.event.WindowAdapter() {
+            public void windowClosing(java.awt.event.WindowEvent evt) {
+                formWindowClosing(evt);
+            }
+        });
 
         datLabel.setLabelFor(datField);
         datLabel.setText("DAT directory:");
@@ -263,6 +286,10 @@ public class GUI extends javax.swing.JFrame {
 		FilenameFilterChooser ffc = new FilenameFilterChooser(this, true);
 		filters = ffc.editFilterList(filters);
     }//GEN-LAST:event_filterButtonActionPerformed
+
+    private void formWindowClosing(java.awt.event.WindowEvent evt) {//GEN-FIRST:event_formWindowClosing
+		savePreferences();
+    }//GEN-LAST:event_formWindowClosing
 
 	private void toggleEnabled() {
 		datField.setEnabled(!datField.isEnabled());
