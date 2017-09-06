@@ -181,6 +181,7 @@ public class GUI extends javax.swing.JFrame {
     private void scanButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_scanButtonActionPerformed
 		if (datField.getText().length() == 0) {
 			JOptionPane.showMessageDialog(this, "You need to specify a DAT file directory!", "borf", JOptionPane.WARNING_MESSAGE);
+			return;
 		}
 
 		SwingWorker<Void, Void> woiker = new SwingWorker<Void, Void>() {
