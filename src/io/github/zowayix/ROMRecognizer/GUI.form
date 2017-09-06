@@ -41,7 +41,7 @@
                   <Group type="102" alignment="0" attributes="0">
                       <Component id="romLabel" min="-2" max="-2" attributes="0"/>
                       <EmptySpace max="-2" attributes="0"/>
-                      <Component id="romField" pref="680" max="32767" attributes="0"/>
+                      <Component id="romField" pref="668" max="32767" attributes="0"/>
                       <EmptySpace max="-2" attributes="0"/>
                       <Component id="romButton" min="-2" max="-2" attributes="0"/>
                   </Group>
@@ -57,7 +57,6 @@
                       <Component id="filterCheck" min="-2" max="-2" attributes="0"/>
                       <EmptySpace max="-2" attributes="0"/>
                       <Component id="filterButton" min="-2" max="-2" attributes="0"/>
-                      <EmptySpace max="32767" attributes="0"/>
                   </Group>
               </Group>
               <EmptySpace max="-2" attributes="0"/>
@@ -151,22 +150,28 @@
           <Properties>
             <Property name="autoCreateRowSorter" type="boolean" value="true"/>
             <Property name="model" type="javax.swing.table.TableModel" editor="org.netbeans.modules.form.editors2.TableModelEditor">
-              <Table columnCount="11" rowCount="0">
+              <Table columnCount="12" rowCount="0">
                 <Column editable="true" title="Filename" type="java.lang.Object"/>
                 <Column editable="true" title="Name" type="java.lang.Object"/>
-                <Column editable="true" title="CRC32" type="java.lang.Object"/>
-                <Column editable="true" title="MD5" type="java.lang.Object"/>
-                <Column editable="true" title="SHA-1" type="java.lang.Object"/>
+                <Column editable="true" title="CRC32" type="java.lang.String"/>
+                <Column editable="true" title="MD5" type="java.lang.String"/>
+                <Column editable="true" title="SHA-1" type="java.lang.String"/>
                 <Column editable="true" title="Path" type="java.lang.Object"/>
                 <Column editable="true" title="Platform" type="java.lang.Object"/>
                 <Column editable="true" title="ROM Name" type="java.lang.Object"/>
                 <Column editable="true" title="Description" type="java.lang.Object"/>
                 <Column editable="true" title="Size" type="java.lang.Long"/>
                 <Column editable="true" title="Status" type="java.lang.Object"/>
+                <Column editable="true" title="File Type (from Ext)" type="java.lang.String"/>
               </Table>
             </Property>
             <Property name="columnModel" type="javax.swing.table.TableColumnModel" editor="org.netbeans.modules.form.editors2.TableColumnModelEditor">
               <TableColumnModel selectionModel="0">
+                <Column maxWidth="-1" minWidth="-1" prefWidth="-1" resizable="true">
+                  <Title/>
+                  <Editor/>
+                  <Renderer/>
+                </Column>
                 <Column maxWidth="-1" minWidth="-1" prefWidth="-1" resizable="true">
                   <Title/>
                   <Editor/>

@@ -309,6 +309,8 @@ public class ROMRecognizer {
 			Object[] row = new Object[]{f.getName(), null, "Calculating..", "Calculating..", "Calculating..", f.getPath(), null, null, null, 0, null};
 			model.addRow(row);
 			int rowNum = model.getRowCount() - 1;
+			
+			Utils.setTableValue(model, rowNum, "File Type (from Ext)", getKnownExtensions().getOrDefault(Utils.getFileExtension(f), "Unknown"));
 
 			//(new Thread(new RowUpdater(f, rowNum, model, gameList))).start();
 			Runnable updater = new RowUpdater(f, rowNum, model, gameList);
@@ -327,6 +329,8 @@ public class ROMRecognizer {
 					Object[] row = new Object[]{zippedName, null, "Calculating..", "Calculating..", "Calculating..", zippedPath, null, null, null, 0, null};
 					model.addRow(row);
 					int rowNum = model.getRowCount() - 1;
+					
+					Utils.setTableValue(model, rowNum, "File Type (from Ext)", getKnownExtensions().getOrDefault(Utils.getFileExtension(ze.getName()), "Unknown"));
 
 					Runnable updater = new RowUpdater(Utils.cloneInputStream(stream), rowNum, model, gameList);
 					pool.execute(updater);
