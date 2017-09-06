@@ -19,7 +19,9 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -36,18 +38,30 @@ import org.xml.sax.SAXException;
  */
 public class ROMRecognizer {
 
-	public static ArrayList<Game> getAllDataFiles(File rootDir) throws IOException {
-		ArrayList<Game> games = new ArrayList<>();
+	public static Collection<Game> getAllDataFiles(File rootDir) throws IOException {
+		List<Game> games = Collections.synchronizedList(new ArrayList<>());
+		ExecutorService pool = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
+		List<Callable<Object>> tasks = new ArrayList<>();
 
 		for (File f : rootDir.listFiles((File dir, String name) -> name.endsWith(".dat"))) {
-			try {
-				DataFile df = new DataFile(f);
-				df.initGames();
-				games.addAll(df.getGameList());
-			} catch (SAXException saxe) {
-				//Skip this file, though this will print an error message anyway
-				//even though I don't want it to because fuck you I guess
-			}
+			tasks.add(Executors.callable(() -> {
+				try {
+					DataFile df = new DataFile(f);
+					df.initGames();
+					games.addAll(df.getGameList());
+				} catch (SAXException saxe) {
+					//Skip this file, though this will print an error message anyway
+					//even though I don't want it to because fuck you I guess
+				} catch (IOException ex) {
+					//fuck
+					throw new RuntimeException(ex);
+				}
+			}));
+
+		}
+		try {
+			pool.invokeAll(tasks);
+		} catch (InterruptedException ex) {
 		}
 
 		return games;
@@ -111,7 +125,7 @@ public class ROMRecognizer {
 
 	public static Map<File, Game> identifyAllGames(File datDir, File rootDir) throws IOException {
 		//TODO Should merge this into scanGames (refactoring it to not always use JTable) and deprecate/delet this
-		ArrayList<Game> gameList = getAllDataFiles(datDir);
+		Collection<Game> gameList = getAllDataFiles(datDir);
 		Map<File, Game> games = new HashMap<>();
 		Files.walkFileTree(rootDir.toPath(), new FileVisitor<Path>() {
 			@Override
