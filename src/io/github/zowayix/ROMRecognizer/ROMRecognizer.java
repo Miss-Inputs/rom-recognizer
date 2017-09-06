@@ -410,7 +410,6 @@ public class ROMRecognizer {
 
 			@Override
 			public void run() {
-				//"Filename", "Name", "CRC32", "MD5", "SHA-1", "Path", "Platform", "ROM Name", "Description", "Size", "Status"
 				try {
 					String crc32, md5, sha1;
 					if (f == null) {
@@ -427,29 +426,30 @@ public class ROMRecognizer {
 						sha1 = Hash.sha1(f);
 					}
 
-					model.setValueAt(crc32, rowNumber, 2);
-					model.setValueAt(md5, rowNumber, 3);
-					model.setValueAt(sha1, rowNumber, 4);
-					model.setValueAt("Waiting...", rowNumber, 1);
+					//model.setValueAt(crc32, rowNumber, model.findColumn("CRC32"));
+					Utils.setTableValue(model, rowNumber, "CRC32", crc32);
+					Utils.setTableValue(model, rowNumber, "MD5", md5);
+					Utils.setTableValue(model, rowNumber, "SHA-1", sha1);
+					Utils.setTableValue(model, rowNumber, "Name", "Waiting for dat files to load...");
 
 					Collection<Game> theList = gameList.get();
 					model.setValueAt("Identifying...", rowNumber, 1);
 
 					Game game = identifyBySHA1(theList, sha1);
 					if (game != null) {
-						model.setValueAt(game.getName(), rowNumber, 1);
-						model.setValueAt(game.getDataFile().getName(), rowNumber, 6);
-						model.setValueAt(game.getRomName(), rowNumber, 7);
-						model.setValueAt(game.getDescription(), rowNumber, 8);
-						model.setValueAt(game.getSize(), rowNumber, 9);
-						model.setValueAt(game.getStatus(), rowNumber, 10);
+						Utils.setTableValue(model, rowNumber, "Name", game.getName());
+						Utils.setTableValue(model, rowNumber, "Platform", game.getDataFile().getName());
+						Utils.setTableValue(model, rowNumber, "ROM Name", game.getRomName());
+						Utils.setTableValue(model, rowNumber, "Description", game.getDescription());
+						Utils.setTableValue(model, rowNumber, "Size", game.getSize());
+						Utils.setTableValue(model, rowNumber, "Status", game.getStatus());
 					} else {
-						model.setValueAt("Unrecognized!", rowNumber, 1);
-						model.setValueAt(null, rowNumber, 6);
-						model.setValueAt(null, rowNumber, 7);
-						model.setValueAt(null, rowNumber, 8);
-						model.setValueAt(null, rowNumber, 9);
-						model.setValueAt(null, rowNumber, 10);
+						Utils.setTableValue(model, rowNumber, "Name", null);
+						Utils.setTableValue(model, rowNumber, "Platform", null);
+						Utils.setTableValue(model, rowNumber, "ROM Name", null);
+						Utils.setTableValue(model, rowNumber, "Description", null);
+						Utils.setTableValue(model, rowNumber, "Size", 0);
+						Utils.setTableValue(model, rowNumber, "Status", "Unrecognized!");
 					}
 
 				} catch (IOException | InterruptedException | ExecutionException ex) {
