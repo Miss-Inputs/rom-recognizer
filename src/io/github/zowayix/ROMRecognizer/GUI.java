@@ -5,6 +5,12 @@
  */
 package io.github.zowayix.ROMRecognizer;
 
+import java.awt.HeadlessException;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
 import java.awt.event.WindowEvent;
 import java.io.File;
 import java.io.IOException;
@@ -16,9 +22,15 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import javax.swing.JFileChooser;
+import javax.swing.JMenu;
+import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
+import javax.swing.JPopupMenu;
+import javax.swing.JTable;
 import javax.swing.SwingWorker;
 import javax.swing.table.DefaultTableModel;
+import javax.swing.table.TableColumn;
+import javax.swing.table.TableColumnModel;
 
 /**
  *
@@ -36,8 +48,9 @@ public class GUI extends javax.swing.JFrame {
 	public GUI() {
 		initComponents();
 		filters = new ArrayList<>(ROMRecognizer.getKnownExtensions().keySet());
-
+		TableContextMenuListener.addTableHeaderEventHandlers(resultList);
 	}
+
 
 	/**
 	 * This method is called from within the constructor to initialize the form. WARNING: Do NOT
@@ -348,4 +361,65 @@ public class GUI extends javax.swing.JFrame {
     private javax.swing.JLabel workerLabel;
     private javax.swing.JSpinner workerSpinner;
     // End of variables declaration//GEN-END:variables
+
+	/*private static class TableContextMenuListener extends MouseAdapter {
+
+		private final JTable table;
+		private final TableColumnModel model;
+
+		public TableContextMenuListener(JTable table) {
+			this.table = table;
+			this.model = table.getColumnModel();
+		}
+
+		private void decideShowContextMenu(MouseEvent e) {
+			if (e.isPopupTrigger()) {
+				showContextMenu(e);
+				e.consume();
+			}
+		}
+
+		private void showContextMenu(MouseEvent e) {
+			int colIndex = table.columnAtPoint(e.getPoint());
+			JPopupMenu menu = new JPopupMenu();
+
+			JMenuItem hideItem = new JMenuItem("Hide Column");
+			hideItem.addActionListener((ActionEvent ae) -> {
+				TableColumn column = model.getColumn(table.convertColumnIndexToModel(colIndex));
+				column.setPreferredWidth(0);
+				column.setMinWidth(0);
+				column.setMaxWidth(0);
+			});
+
+			JMenu showSubmenu = new JMenu("Show Hidden");
+			for (int i = 0; i < model.getColumnCount(); ++i) {
+				TableColumn column = model.getColumn(i);
+				if (column.getWidth() == 0) {
+					JMenuItem showItem = new JMenuItem(column.getHeaderValue().toString());
+					showItem.addActionListener((ActionEvent e1) -> {
+						column.setMaxWidth(Integer.MAX_VALUE);
+						column.setPreferredWidth(75); //According to getWidth(), default value
+					});
+					showSubmenu.add(showItem);
+				}
+			}
+
+			menu.add(hideItem);
+			if (showSubmenu.getMenuComponentCount() > 0) {
+				menu.add(showSubmenu);
+			}
+			menu.show(e.getComponent(), e.getX(), e.getY());
+		}
+
+		@Override
+		public void mousePressed(MouseEvent e) {
+			decideShowContextMenu(e);
+		}
+
+		@Override
+		public void mouseReleased(MouseEvent e) {
+			decideShowContextMenu(e);
+		}
+
+	}*/
 }
