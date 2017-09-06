@@ -5,6 +5,9 @@
     <Property name="defaultCloseOperation" type="int" value="3"/>
     <Property name="title" type="java.lang.String" value="The ROM Recognizer"/>
   </Properties>
+  <AccessibilityProperties>
+    <Property name="AccessibleContext.accessibleDescription" type="java.lang.String" value=""/>
+  </AccessibilityProperties>
   <SyntheticProperties>
     <SyntheticProperty name="formSizePolicy" type="int" value="1"/>
     <SyntheticProperty name="generateCenter" type="boolean" value="false"/>
@@ -38,7 +41,7 @@
                   <Group type="102" alignment="0" attributes="0">
                       <Component id="romLabel" min="-2" max="-2" attributes="0"/>
                       <EmptySpace max="-2" attributes="0"/>
-                      <Component id="romField" pref="668" max="32767" attributes="0"/>
+                      <Component id="romField" pref="680" max="32767" attributes="0"/>
                       <EmptySpace max="-2" attributes="0"/>
                       <Component id="romButton" min="-2" max="-2" attributes="0"/>
                   </Group>
@@ -50,7 +53,11 @@
                       <Component id="workerLabel" min="-2" max="-2" attributes="0"/>
                       <EmptySpace max="-2" attributes="0"/>
                       <Component id="workerSpinner" min="-2" pref="73" max="-2" attributes="0"/>
-                      <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
+                      <EmptySpace max="-2" attributes="0"/>
+                      <Component id="filterCheck" min="-2" max="-2" attributes="0"/>
+                      <EmptySpace max="-2" attributes="0"/>
+                      <Component id="filterButton" min="-2" max="-2" attributes="0"/>
+                      <EmptySpace max="32767" attributes="0"/>
                   </Group>
               </Group>
               <EmptySpace max="-2" attributes="0"/>
@@ -78,6 +85,8 @@
                   <Component id="quitButton" alignment="3" min="-2" max="-2" attributes="0"/>
                   <Component id="workerLabel" alignment="3" min="-2" max="-2" attributes="0"/>
                   <Component id="workerSpinner" alignment="3" min="-2" max="-2" attributes="0"/>
+                  <Component id="filterButton" alignment="3" min="-2" max="-2" attributes="0"/>
+                  <Component id="filterCheck" alignment="3" min="-2" max="-2" attributes="0"/>
               </Group>
               <EmptySpace min="-2" max="-2" attributes="0"/>
               <Component id="jScrollPane1" pref="424" max="32767" attributes="0"/>
@@ -237,6 +246,9 @@
     </Component>
     <Component class="javax.swing.JLabel" name="workerLabel">
       <Properties>
+        <Property name="labelFor" type="java.awt.Component" editor="org.netbeans.modules.form.ComponentChooserEditor">
+          <ComponentRef name="workerSpinner"/>
+        </Property>
         <Property name="text" type="java.lang.String" value="Worker threads:"/>
       </Properties>
     </Component>
@@ -245,6 +257,19 @@
         <Property name="model" type="javax.swing.SpinnerModel" editor="org.netbeans.modules.form.editors2.SpinnerModelEditor">
           <SpinnerModel initial="256" minimum="1" numberType="java.lang.Integer" stepSize="1" type="number"/>
         </Property>
+      </Properties>
+    </Component>
+    <Component class="javax.swing.JButton" name="filterButton">
+      <Properties>
+        <Property name="text" type="java.lang.String" value="..."/>
+      </Properties>
+      <Events>
+        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="filterButtonActionPerformed"/>
+      </Events>
+    </Component>
+    <Component class="javax.swing.JCheckBox" name="filterCheck">
+      <Properties>
+        <Property name="text" type="java.lang.String" value="Only scan specific extensions"/>
       </Properties>
     </Component>
   </SubComponents>

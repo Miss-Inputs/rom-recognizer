@@ -7,12 +7,14 @@ package io.github.zowayix.ROMRecognizer;
 
 import java.awt.event.WindowEvent;
 import java.io.File;
+import java.io.IOException;
 import java.text.ParseException;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
-import java.util.concurrent.ThreadFactory;
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 import javax.swing.SwingWorker;
@@ -24,11 +26,17 @@ import javax.swing.table.DefaultTableModel;
  */
 public class GUI extends javax.swing.JFrame {
 
+	private static final long serialVersionUID = -7190543310189730445L;
+
+	private List<String> filters = null;
+
 	/**
 	 * Creates new form GUI
 	 */
 	public GUI() {
 		initComponents();
+		filters = new ArrayList<>(ROMRecognizer.getKnownExtensions().keySet());
+
 	}
 
 	/**
@@ -51,6 +59,8 @@ public class GUI extends javax.swing.JFrame {
         quitButton = new javax.swing.JButton();
         workerLabel = new javax.swing.JLabel();
         workerSpinner = new javax.swing.JSpinner();
+        filterButton = new javax.swing.JButton();
+        filterCheck = new javax.swing.JCheckBox();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         setTitle("The ROM Recognizer");
@@ -111,9 +121,19 @@ public class GUI extends javax.swing.JFrame {
             }
         });
 
+        workerLabel.setLabelFor(workerSpinner);
         workerLabel.setText("Worker threads:");
 
         workerSpinner.setModel(new javax.swing.SpinnerNumberModel(256, 1, null, 1));
+
+        filterButton.setText("...");
+        filterButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                filterButtonActionPerformed(evt);
+            }
+        });
+
+        filterCheck.setText("Only scan specific extensions");
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
@@ -132,7 +152,7 @@ public class GUI extends javax.swing.JFrame {
                     .addGroup(layout.createSequentialGroup()
                         .addComponent(romLabel)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(romField, javax.swing.GroupLayout.DEFAULT_SIZE, 668, Short.MAX_VALUE)
+                        .addComponent(romField, javax.swing.GroupLayout.DEFAULT_SIZE, 680, Short.MAX_VALUE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(romButton))
                     .addGroup(layout.createSequentialGroup()
@@ -143,7 +163,11 @@ public class GUI extends javax.swing.JFrame {
                         .addComponent(workerLabel)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(workerSpinner, javax.swing.GroupLayout.PREFERRED_SIZE, 73, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(0, 0, Short.MAX_VALUE)))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(filterCheck)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(filterButton)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
@@ -164,11 +188,15 @@ public class GUI extends javax.swing.JFrame {
                     .addComponent(scanButton)
                     .addComponent(quitButton)
                     .addComponent(workerLabel)
-                    .addComponent(workerSpinner, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(workerSpinner, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(filterButton)
+                    .addComponent(filterCheck))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 424, Short.MAX_VALUE)
                 .addContainerGap())
         );
+
+        getAccessibleContext().setAccessibleDescription("");
 
         pack();
     }// </editor-fold>//GEN-END:initComponents
@@ -198,6 +226,11 @@ public class GUI extends javax.swing.JFrame {
 			return;
 		}
 
+		if (!new File(datField.getText()).isDirectory()) {
+			JOptionPane.showMessageDialog(this, "The DAT directory specified doesn't exist or isn't a directory", "borf", JOptionPane.WARNING_MESSAGE);
+			return;
+		}
+
 		SwingWorker<Void, Void> woiker = new SwingWorker<Void, Void>() {
 			@Override
 			protected Void doInBackground() throws Exception {
@@ -213,6 +246,11 @@ public class GUI extends javax.swing.JFrame {
     private void quitButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_quitButtonActionPerformed
 		dispatchEvent(new WindowEvent(this, WindowEvent.WINDOW_CLOSING));
     }//GEN-LAST:event_quitButtonActionPerformed
+
+    private void filterButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_filterButtonActionPerformed
+		FilenameFilterChooser ffc = new FilenameFilterChooser(this, true);
+		filters = ffc.editFilterList(filters);
+    }//GEN-LAST:event_filterButtonActionPerformed
 
 	private void toggleEnabled() {
 		datField.setEnabled(!datField.isEnabled());
@@ -244,9 +282,15 @@ public class GUI extends javax.swing.JFrame {
 			}
 			workerCount = (int) workerSpinner.getModel().getValue();
 
-			((DefaultTableModel)resultList.getModel()).setRowCount(0);
-			ROMRecognizer.scanGames(gameList, new File(romField.getText()), resultList, workerCount);
-		} catch (Exception ex) {
+			((DefaultTableModel) resultList.getModel()).setRowCount(0);
+			if (filterCheck.isSelected()) {
+				ROMRecognizer.scanGames(gameList, new File(romField.getText()), resultList, workerCount, filters);
+			} else {
+
+				ROMRecognizer.scanGames(gameList, new File(romField.getText()), resultList, workerCount);
+			}
+
+		} catch (IOException ex) {
 			JOptionPane.showMessageDialog(this, ex, "Ah fuck, I can't believe you've done this", JOptionPane.ERROR_MESSAGE);
 		} finally {
 			toggleEnabled();
@@ -293,6 +337,8 @@ public class GUI extends javax.swing.JFrame {
     private javax.swing.JButton datButton;
     private javax.swing.JTextField datField;
     private javax.swing.JLabel datLabel;
+    private javax.swing.JButton filterButton;
+    private javax.swing.JCheckBox filterCheck;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JButton quitButton;
     private javax.swing.JTable resultList;

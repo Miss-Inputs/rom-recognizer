@@ -5,8 +5,6 @@
  */
 package io.github.zowayix.ROMRecognizer;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -37,13 +35,116 @@ import org.xml.sax.SAXException;
  * @author megan
  */
 public class ROMRecognizer {
+	
+	public static Map<String, String> getKnownExtensions(){
+		Map<String, String> m = new HashMap<>();
+		m.put("zip", "Zipped file(s)");
+		m.put("gz", "GZipped file");
+		m.put("bz2", "Bzip2ed file");
+		m.put("7z", "7zipped file(s)");
+		m.put("rar", "Evil bad terrible format");
+		
+		m.put("bin", "Binary file"); 
+		m.put("img", "Raw image");
+		m.put("dsk", "Disk image");
+		m.put("rom", "ROM image");
+		m.put("cdi", "CD disc image");
+		m.put("iso", "Optical disc image");
+		m.put("elf", "Executable and Linkable Format executable");
+		m.put("tap", "Tape image");
+		
+		m.put("3ds", "3DS cart"); 
+		m.put("3dsx", "3DS homebrew"); 
+		m.put("cia", "3DS/DSiWare downloadable title (CTR Importable Archive)");
+		m.put("32x", "Sega 32X ROM");
+		m.put("adf", "Amiga disk image");
+		m.put("adz", "Gzipped Amiga disk image");
+		m.put("idf", "Amiga Interchangable Preservation Format disk image");
+		m.put("dms", "Amiga DiskSmasher archive");
+		m.put("shk", "Apple II ShrinkIt archive");
+		m.put("a26", "Atari 2600 ROM");
+		m.put("a78", "Atari 7800 ROM");
+		m.put("a78", "Atari 7800 ROM");
+		m.put("j64", "Atari Jaguar ROM");
+		m.put("jag", "Atari Jaguar Server executable");
+		m.put("lnx", "Atari Lynx ROM");
+		m.put("msa", "Atari Magic Shadow Archiver archive");
+		m.put("xex", "Atari XL/XE executable");
+		m.put("atr", "Atari disk image");
+		m.put("ssd", "BBC Micro single-sided disk image");
+		m.put("dsd", "BBC Micro double-sided disk image");
+		m.put("col", "ColecoVision ROM");
+		m.put("d64", "Commodore 16/64/128 disk image");
+		m.put("prg", "Commodore 16/64/128 program"); //Seems like other 8-bit computers use this format too
+		m.put("crt", "Commodore 64 cartridge");
+		m.put("nds", "Nintendo DS ROM");
+		m.put("gb", "Nintendo Gameboy ROM");
+		m.put("gbc", "Nintendo Gameboy Colour ROM");
+		m.put("gcm", "Nintendo GameCube disc image");
+		m.put("gcz", "Dolphin compressed GameCube/Wii disc image");
+		m.put("dol", "Nintendo GameCube/Wii executable");
+		m.put("dol", "Nintendo GameCube executable");
+		m.put("gba", "Nintendo Gameboy Advance ROM");
+		m.put("int", "Intellivision ROM");
+		m.put("gg", "Sega Game Gear ROM");
+		m.put("sms", "Sega Master System ROM");
+		m.put("gen", "Sega Mega Drive/Genesis ROM");
+		m.put("smd", "Sega Mega Drive/Genesis interleaved ROM");
+		m.put("md", "Sega Mega Drive/Genesis ROM"); //More commonly Markdown, but we are not concerned with that
+		m.put("n64", "Nintendo 64 little-endian ROM");
+		m.put("v64", "Nintendo 64 Doctor V64 ROM");
+		m.put("z64", "Nintendo 64 ROM"); //Big endian, which is what the real N64 uses
+		m.put("ngp", "Neo Geo Pocket ROM");
+		m.put("nes", "Nintendo Entertainment System ROM");
+		m.put("fds", "Nintendo Famicom Disk System ROM");
+		m.put("prc", "PalmOS application");
+		m.put("pce", "TurboGrafx-16/PC Engine ROM");
+		m.put("sgx", "PC Engine Supergrafx ROM");
+		m.put("min", "Pokémon Mini ROM");
+		m.put("sad", "SAM Coupé disk image");
+		m.put("mzf", "Sharp MZ tape image");
+		m.put("sfc", "Super Nintendo Entertainment System ROM");
+		m.put("smc", "SNES ROM with Super Magic Card header");
+		m.put("swc", "SNES ROM with Super Wild Card header");
+		m.put("fig", "SNES ROM with Fighter Partner header");
+		m.put("82b", "TI-82 backup");
+		m.put("82g", "TI-82 grouped files");
+		m.put("82p", "TI-82 program");
+		m.put("83b", "TI-83 backup memory image");
+		m.put("83g", "TI-83 grouped files");
+		m.put("83p", "TI-83 program");
+		m.put("83z", "TI-83 assembly program");
+		m.put("8xb", "TI-83+/84+ backup memory image");
+		m.put("8xg", "TI-83+/84+ grouped files");
+		m.put("8xk", "TI-83+/84+ application");
+		m.put("8xp", "TI-83+/84+ program");
+		m.put("8xu", "TI-83+/84+ OS");
+		m.put("8xz", "TI-83+/84+ assembly program");
+		m.put("86g", "TI-86 grouped files");
+		m.put("86p", "TI-86 program");
+		m.put("89b", "TI-89/92/92+ backup");
+		m.put("89c", "TI-89/92/92+ data");
+		m.put("89g", "TI-89/92/92+ group");
+		m.put("89k", "TI-89/92/92+ application");
+		m.put("89p", "TI-89/92/92+ program");
+		m.put("89u", "TI-89/92/92+ OS");
+		m.put("89z", "TI-89/92/92+ assembly program");
+		m.put("cas", "TRS-80 casette tape image");
+		m.put("vb", "Nintendo Virtual Boy ROM"); //Not Visual Basic source file in this case
+		m.put("wad", "Nintendo Wii channel/IOS");
+		m.put("ws", "Bandai WonderSwan ROM");
+		m.put("wsc", "Bandai WonderSwan Color ROM");
+		m.put("z80", "ZX Spectrum memory snapshot");
+		
+		return m;
+	}
 
 	public static Collection<Game> getAllDataFiles(File rootDir) throws IOException {
 		List<Game> games = Collections.synchronizedList(new ArrayList<>());
 		ExecutorService pool = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
 		List<Callable<Object>> tasks = new ArrayList<>();
 
-		for (File f : rootDir.listFiles((File dir, String name) -> name.endsWith(".dat"))) {
+		for (File f : rootDir.listFiles((File dir, String name) -> Utils.endsWithIgnoreCase(name, ".dat"))) {
 			tasks.add(Executors.callable(() -> {
 				try {
 					DataFile df = new DataFile(f);
@@ -164,11 +265,14 @@ public class ROMRecognizer {
 		}); //}
 		return games;
 	}
+	
+	public static void scanGames(Future<Collection<Game>> gameList, File rootDir, JTable table, int workerCount, List<String> filteredExtensions) throws IOException {
+		ExecutorService pool = Executors.newFixedThreadPool(workerCount);
+		Files.walkFileTree(rootDir.toPath(), new GameScanner(table, gameList, pool, filteredExtensions));
+	}
 
 	public static void scanGames(Future<Collection<Game>> gameList, File rootDir, JTable table, int workerCount) throws IOException {
-		ExecutorService pool = Executors.newFixedThreadPool(workerCount);
-		System.out.println("workers: " + workerCount);
-		Files.walkFileTree(rootDir.toPath(), new GameScanner(table, gameList, pool));
+		scanGames(gameList, rootDir, table, workerCount, null);
 	}
 
 	public static void main(String[] args) throws Exception {
@@ -184,11 +288,13 @@ public class ROMRecognizer {
 		private final JTable table;
 		private final Future<Collection<Game>> gameList;
 		private final ExecutorService pool;
+		private final List<String> filteredExtensions;
 
-		public GameScanner(JTable table, Future<Collection<Game>> gameList, ExecutorService pool) {
+		public GameScanner(JTable table, Future<Collection<Game>> gameList, ExecutorService pool, List<String> filteredExtensions) {
 			this.table = table;
 			this.gameList = gameList;
 			this.pool = pool;
+			this.filteredExtensions = filteredExtensions;
 		}
 
 		@Override
@@ -222,21 +328,10 @@ public class ROMRecognizer {
 					model.addRow(row);
 					int rowNum = model.getRowCount() - 1;
 
-					Runnable updater = new RowUpdater(cloneInputStream(stream), rowNum, model, gameList);
+					Runnable updater = new RowUpdater(Utils.cloneInputStream(stream), rowNum, model, gameList);
 					pool.execute(updater);
 				}
 			}
-		}
-
-		private InputStream cloneInputStream(InputStream is) throws IOException {
-			byte[] buf = new byte[1024];
-			ByteArrayOutputStream baos = new ByteArrayOutputStream();
-			int bytesRead;
-			while ((bytesRead = is.read(buf)) > -1) {
-				baos.write(buf, 0, bytesRead);
-			}
-			baos.flush();
-			return new ByteArrayInputStream(baos.toByteArray());
 		}
 
 		@Override
@@ -245,10 +340,24 @@ public class ROMRecognizer {
 
 				File f = file.toFile();
 				if (f.isDirectory()) {
+					//walkFileTree already visits subdirectories, so we don't need to visit it here
 					return FileVisitResult.CONTINUE;
 				}
+				
+				if(filteredExtensions != null){
+					boolean scanned = false;
+					for(String extension : filteredExtensions){
+						if(Utils.endsWithIgnoreCase(f.getName(), '.' + extension)){
+							scanned = true;
+							break;
+						}
+					}
+					if(!scanned){
+						return FileVisitResult.CONTINUE;
+					}
+				}
 
-				if (f.getName().matches("^.+(?i:\\.zip$)")) {
+				if (Utils.endsWithIgnoreCase(f.getName(), ".zip")){
 					addZip(f);
 				} else {
 					addFile(f);
