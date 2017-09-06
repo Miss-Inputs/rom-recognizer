@@ -8,13 +8,14 @@ import java.io.InputStream;
 import javax.swing.table.AbstractTableModel;
 
 /**
- *
+ * Shit that I can't be fucked putting anywhere else
  * @author megan
  */
 public class Utils {
 
 	private Utils() {
 	}
+	
 
 	public static String formatByteSize(long bytes, boolean isMetric) {
 		int baseUnit = isMetric ? 1000 : 1024;
