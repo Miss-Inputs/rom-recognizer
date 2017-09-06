@@ -40,6 +40,7 @@ public class FilenameFilterChooser extends javax.swing.JDialog {
         deleteButton = new javax.swing.JButton();
         helpLabel = new javax.swing.JLabel();
         clearButton = new javax.swing.JButton();
+        resetButton = new javax.swing.JButton();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
         setTitle("Filename Extensions");
@@ -84,6 +85,13 @@ public class FilenameFilterChooser extends javax.swing.JDialog {
             }
         });
 
+        resetButton.setText("Reset to defaults");
+        resetButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                resetButtonActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
@@ -103,7 +111,9 @@ public class FilenameFilterChooser extends javax.swing.JDialog {
                     .addGroup(layout.createSequentialGroup()
                         .addComponent(okButton)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(cancelButton)))
+                        .addComponent(cancelButton)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(resetButton)))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
@@ -124,7 +134,8 @@ public class FilenameFilterChooser extends javax.swing.JDialog {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(okButton)
-                    .addComponent(cancelButton))
+                    .addComponent(cancelButton)
+                    .addComponent(resetButton))
                 .addContainerGap())
         );
 
@@ -150,9 +161,18 @@ public class FilenameFilterChooser extends javax.swing.JDialog {
     }//GEN-LAST:event_clearButtonActionPerformed
 
     private void deleteButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_deleteButtonActionPerformed
-        int selectedRow = filenameList.getSelectedIndex();
+		int selectedRow = filenameList.getSelectedIndex();
 		((DefaultListModel<String>) (filenameList.getModel())).remove(selectedRow);
     }//GEN-LAST:event_deleteButtonActionPerformed
+
+    private void resetButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_resetButtonActionPerformed
+		DefaultListModel<String> model = (DefaultListModel<String>) (filenameList.getModel());
+
+		model.clear();
+		for(String ext : ROMRecognizer.getKnownExtensions().keySet()){
+			model.addElement(ext);
+		}
+    }//GEN-LAST:event_resetButtonActionPerformed
 
 	public List<String> editFilterList(List<String> list) {
 		setExtensionList(list);
@@ -236,5 +256,6 @@ public class FilenameFilterChooser extends javax.swing.JDialog {
     private javax.swing.JLabel helpLabel;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JButton okButton;
+    private javax.swing.JButton resetButton;
     // End of variables declaration//GEN-END:variables
 }
