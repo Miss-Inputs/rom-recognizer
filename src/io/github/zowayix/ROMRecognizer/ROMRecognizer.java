@@ -379,7 +379,7 @@ public class ROMRecognizer {
 
 		@Override
 		public FileVisitResult visitFileFailed(Path file, IOException exc) throws IOException {
-			//Whomstd've give a shit
+			//Whomstd've give a fuck
 			return FileVisitResult.CONTINUE;
 		}
 
