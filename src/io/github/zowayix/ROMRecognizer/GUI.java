@@ -16,6 +16,7 @@ import java.util.concurrent.ThreadFactory;
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 import javax.swing.SwingWorker;
+import javax.swing.table.DefaultTableModel;
 
 /**
  *
@@ -243,6 +244,7 @@ public class GUI extends javax.swing.JFrame {
 			}
 			workerCount = (int) workerSpinner.getModel().getValue();
 
+			((DefaultTableModel)resultList.getModel()).setRowCount(0);
 			ROMRecognizer.scanGames(gameList, new File(romField.getText()), resultList, workerCount);
 		} catch (Exception ex) {
 			JOptionPane.showMessageDialog(this, ex, "Ah fuck, I can't believe you've done this", JOptionPane.ERROR_MESSAGE);
