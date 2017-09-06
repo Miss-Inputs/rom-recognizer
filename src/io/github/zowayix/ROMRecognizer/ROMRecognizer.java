@@ -151,8 +151,9 @@ public class ROMRecognizer {
 		return games;
 	}
 
-	public static void scanGames(Future<Collection<Game>> gameList, File rootDir, JTable table) throws IOException {
-		ExecutorService pool = Executors.newFixedThreadPool(256);
+	public static void scanGames(Future<Collection<Game>> gameList, File rootDir, JTable table, int workerCount) throws IOException {
+		ExecutorService pool = Executors.newFixedThreadPool(workerCount);
+		System.out.println("workers: " + workerCount);
 		Files.walkFileTree(rootDir.toPath(), new GameScanner(table, gameList, pool));
 	}
 

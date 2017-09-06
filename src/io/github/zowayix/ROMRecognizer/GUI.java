@@ -7,6 +7,7 @@ package io.github.zowayix.ROMRecognizer;
 
 import java.awt.event.WindowEvent;
 import java.io.File;
+import java.text.ParseException;
 import java.util.Collection;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -47,6 +48,8 @@ public class GUI extends javax.swing.JFrame {
         jScrollPane1 = new javax.swing.JScrollPane();
         resultList = new javax.swing.JTable();
         quitButton = new javax.swing.JButton();
+        workerLabel = new javax.swing.JLabel();
+        workerSpinner = new javax.swing.JSpinner();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         setTitle("The ROM Recognizer");
@@ -107,6 +110,10 @@ public class GUI extends javax.swing.JFrame {
             }
         });
 
+        workerLabel.setText("Worker threads:");
+
+        workerSpinner.setModel(new javax.swing.SpinnerNumberModel(256, 1, null, 1));
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
@@ -131,6 +138,10 @@ public class GUI extends javax.swing.JFrame {
                         .addComponent(scanButton)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(quitButton)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(workerLabel)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(workerSpinner, javax.swing.GroupLayout.PREFERRED_SIZE, 73, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addGap(0, 0, Short.MAX_VALUE)))
                 .addContainerGap())
         );
@@ -150,9 +161,11 @@ public class GUI extends javax.swing.JFrame {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(scanButton)
-                    .addComponent(quitButton))
+                    .addComponent(quitButton)
+                    .addComponent(workerLabel)
+                    .addComponent(workerSpinner, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jScrollPane1)
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 424, Short.MAX_VALUE)
                 .addContainerGap())
         );
 
@@ -222,7 +235,15 @@ public class GUI extends javax.swing.JFrame {
 			});
 			Future<Collection<Game>> gameList = exeggutor.submit(() -> ROMRecognizer.getAllDataFiles(new File(datField.getText())));
 
-			ROMRecognizer.scanGames(gameList, new File(romField.getText()), resultList);
+			int workerCount;
+			try {
+				workerSpinner.commitEdit();
+			} catch (ParseException pex) {
+				//borf
+			}
+			workerCount = (int) workerSpinner.getModel().getValue();
+
+			ROMRecognizer.scanGames(gameList, new File(romField.getText()), resultList, workerCount);
 		} catch (Exception ex) {
 			JOptionPane.showMessageDialog(this, ex, "Ah fuck, I can't believe you've done this", JOptionPane.ERROR_MESSAGE);
 		} finally {
@@ -277,5 +298,7 @@ public class GUI extends javax.swing.JFrame {
     private javax.swing.JTextField romField;
     private javax.swing.JLabel romLabel;
     private javax.swing.JButton scanButton;
+    private javax.swing.JLabel workerLabel;
+    private javax.swing.JSpinner workerSpinner;
     // End of variables declaration//GEN-END:variables
 }
